@@ -1,4 +1,7 @@
-import { Express } from "express";
+import "dotenv/config";
+import express from "express";
+import cookieParser from "cookie-parser";
+import morgan from "morgan";
 import cors from "cors";
 
 const app = express();
@@ -12,8 +15,12 @@ app.use(
    })
 );
 
+app.use(cookieParser());
+
+app.use(morgan("dev"));
+
 app.use("/ping", function (req, res) {
-   res.send("/pong");
+   res.status(200).send("pong");
 });
 
 //routes of 3 modules
