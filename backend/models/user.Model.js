@@ -1,5 +1,5 @@
 import { Schema, model } from "mongoose";
-
+import jwt from "jsonwebtoken";
 const userSchema = new Schema(
    {
       fullName: {
@@ -45,6 +45,35 @@ const userSchema = new Schema(
    }
 );
 
-const User = -model("User, userSchema");
+userSchema.pre("save", function (next) {
+   if (!this.isModified("password")) {
+      return next();
+   }
+
+   this.password = bcrypt.hash(this.password, 10);
+});
+
+userSchema.methods = {
+   generateJWTToken: async function () {
+      return await jwt.sign(
+         {
+            id: this._id,
+            email: this.email,
+            subscription: this.subscription,
+            role: this.role,
+         },
+         precess.env.SECRET_KEY,
+         {
+            expiresIn: process.env.JWT.EXPIRY,
+         }
+      );
+   },
+
+   comparePassword: async function (plainTextPassword) {
+      return bcrypt.compare(plainTextPassword, this.password);
+   },
+};
+
+const User = model("User, userSchema");
 
 export default User;
