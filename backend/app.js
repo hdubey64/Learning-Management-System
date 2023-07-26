@@ -1,4 +1,3 @@
-import "dotenv/config";
 import express from "express";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
@@ -27,7 +26,7 @@ app.use("/ping", function (req, res) {
 
 //routes of 3 modules
 
-app.use("api/v1/user", router);
+app.use("/api/v1/user", router);
 
 app.all("*", (req, res) => {
    res.status(404).json("OOPS!! 404 page not found");
