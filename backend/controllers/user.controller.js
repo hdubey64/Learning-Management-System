@@ -1,58 +1,63 @@
 import AppError from "../utils/error.util.js";
+import User from "../models/user.Model.js";
 
 const cookieOptions = {
    maxAge: 7 * 24 * 60 * 60 * 1000,
    httpOnly: true,
    secure: true,
 };
-
 const register = async (req, res, next) => {
-   const { fullName, email, password } = req.body;
+   try {
+      const { fullName, email, password, role } = req.body;
 
-   if (!fullName || !email || !password) {
-      return next(new AppError("All fields are required", 400));
+      if (!fullName || !email || !password) {
+         return next(new AppError("All fields are required", 400));
+      }
+
+      const userExists = await User.findOne({ email });
+
+      if (userExists) {
+         return next(new AppError("/Email already exists", 400));
+      }
+
+      const user = new User({
+         fullName,
+         email,
+         password,
+         avatar: {
+            public_id: email,
+            secure_url:
+               "https://cdn.pixabay.com/photo/2018/08/28/12/41/avatar-3637425_1280.png",
+         },
+         role,
+      });
+
+      // TODO: File upload
+
+      await user.save();
+
+      if (!user) {
+         return next(
+            new AppError("User registration failed, please try again", 400)
+         );
+      }
+      user.password = undefined;
+
+      const token = await user.generateJWTToken();
+
+      res.cookie("token", token, cookieOptions);
+
+      return res.status(201).json({
+         success: true,
+         message: "User registration successfully",
+         user,
+      });
+   } catch (error) {
+      return next(new AppError(error.message, 400));
    }
-
-   const userExists = await User.findOne({ email });
-
-   if (!userExists) {
-      return next(new AppError("/Email already exists", 400));
-   }
-
-   const user = await User.create({
-      fullName,
-      email,
-      password,
-      avatar: {
-         public_id: email,
-         secure_url:
-            "https://cdn.pixabay.com/photo/2018/08/28/12/41/avatar-3637425_1280.png",
-      },
-   });
-
-   if (!user) {
-      return next(
-         new AppError("User registration failed, please try again", 400)
-      );
-   }
-
-   // TODO: File upload
-
-   await user.save();
-   user.password = undefined;
-
-   const token = await user.generateJWTToken();
-
-   res.cookie("token", token, cookieOptions);
-
-   res.status(201).json({
-      success: true,
-      message: "User registration successfully",
-      uaer,
-   });
 };
 
-const logIn = async (req, res) => {
+const logIn = async (req, res, next) => {
    try {
       const { email, password } = req.body;
 
@@ -64,8 +69,10 @@ const logIn = async (req, res) => {
          email,
       }).select("+password");
 
-      if (!user || !user.comparePassword(password)) {
-         return next(new App("Email or Password does not match", 400));
+      const isLoggedIn = (await user?.comparePassword(password)) || false;
+
+      if (!user || !isLoggedIn) {
+         return next(new AppError("Email or Password does not match", 400));
       }
 
       const token = await user.generateJWTToken();
@@ -78,7 +85,7 @@ const logIn = async (req, res) => {
          user,
       });
    } catch (error) {
-      return next(new App(error.message, 400));
+      return next(new AppError(error.message, 400));
    }
 };
 
@@ -95,10 +102,10 @@ const logOut = (req, res) => {
    });
 };
 
-const getProfileDetails = async (req, res) => {
+const getProfileDetails = async (req, res, next) => {
    try {
       const userId = req.user.id;
-      const user = await User.findbyId(userId);
+      const user = await User.findById(userId);
 
       res.status(200).json({
          success: true,
@@ -106,7 +113,7 @@ const getProfileDetails = async (req, res) => {
          user,
       });
    } catch (error) {
-      return next(new App("Failed to fetch user details", 500));
+      return next(new AppError("Failed to fetch user details", 500));
    }
 };
 
