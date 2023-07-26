@@ -1,9 +1,11 @@
 import { Schema, model } from "mongoose";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
+
 const userSchema = new Schema(
    {
       fullName: {
-         typeof: "string",
+         type: "string",
          required: [true, "Name is required"],
          minLength: [5, "Name must be at least 5 characters"],
          maxLength: [50, "Name should less than 50 characters"],
@@ -41,16 +43,24 @@ const userSchema = new Schema(
    },
 
    {
-      timestamps,
+      timestamps: true,
    }
 );
 
-userSchema.pre("save", function (next) {
-   if (!this.isModified("password")) {
-      return next();
-   }
+userSchema.pre("save", async function (next) {
+   try {
+      if (!this.isModified("password")) {
+         console.log("log: password", this.password);
+         return next();
+      }
 
-   this.password = bcrypt.hash(this.password, 10);
+      this.password = await bcrypt.hash(this.password, 10);
+      console.log(bcrypt.hash(this.password, 10));
+      next();
+   } catch (error) {
+      console.log(error);
+      throw new Error(error.message);
+   }
 });
 
 userSchema.methods = {
@@ -62,18 +72,17 @@ userSchema.methods = {
             subscription: this.subscription,
             role: this.role,
          },
-         precess.env.SECRET_KEY,
+         process.env.SECRET_KEY,
          {
-            expiresIn: process.env.JWT.EXPIRY,
+            expiresIn: process.env.JWTEXPIRY,
          }
       );
    },
 
    comparePassword: async function (plainTextPassword) {
-      return bcrypt.compare(plainTextPassword, this.password);
+      return await bcrypt.compare(plainTextPassword, this.password);
    },
 };
 
-const User = model("User, userSchema");
-
+const User = model("User", userSchema);
 export default User;
