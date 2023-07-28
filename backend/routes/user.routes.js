@@ -6,6 +6,7 @@ import {
    register,
    forgotPassword,
    resetPassword,
+   changePassword,
 } from "../controllers/user.controller.js";
 import { isLoggedIn } from "../middlewares/auth.middleware.config.js";
 import upload from "../middlewares/multer.middleware.js";
