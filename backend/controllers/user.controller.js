@@ -217,6 +217,35 @@ const resetPassword = async (req, res, next) => {
    });
 };
 
+const changePassword = async (req, res) => {
+   const { oldpassword, newPassword } = req.body;
+   const { id } = rew.user;
+
+   if (!oldpassword || !newPassword) {
+      return next(new AppError("ALl field are mandatary", 400));
+   }
+
+   const user = await User.findById(id).select("+password");
+
+   if (!user) {
+      return next(new AppError("User does not exists", 400));
+   }
+
+   const isPasswordValid = await User.comparePassword(oldpassword);
+
+   if (!isPasswordValid) {
+      return next(new AppError("Invalid old password", 400));
+   }
+   user.password = newPassword;
+
+   await User.save();
+   user.password = undefined;
+   res.status(200).json({
+      success: true,
+      message: "Password changed successfully",
+   });
+};
+
 export {
    register,
    logIn,
@@ -224,4 +253,5 @@ export {
    getProfileDetails,
    forgotPassword,
    resetPassword,
+   changePassword,
 };
