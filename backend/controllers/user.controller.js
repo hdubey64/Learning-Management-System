@@ -2,6 +2,8 @@ import AppError from "../utils/error.util.js";
 import User from "../models/user.Model.js";
 import cloudinary from "cloudinary";
 import * as fs from "fs";
+import sendEmail from "../utils/sendEmail.js";
+import crypto from "crypto";
 
 const cookieOptions = {
    maxAge: 7 * 24 * 60 * 60 * 1000,
@@ -34,8 +36,7 @@ const register = async (req, res, next) => {
          role,
       });
 
-      // TODO: File upload
-
+      // File upload
       if (req.file) {
          console.log(req.file);
          try {
@@ -145,4 +146,82 @@ const getProfileDetails = async (req, res, next) => {
    }
 };
 
-export { register, logIn, logOut, getProfileDetails };
+const forgotPassword = async (req, res, next) => {
+   const { email } = req.body;
+
+   if (!email) {
+      return next(new AppError("Email is required", 400));
+   }
+
+   const user = await User.findOne({ email });
+
+   if (!user) {
+      return next(new AppError("Email not ragistered", 400));
+   }
+
+   const resetToken = await user.generateResetPasswordToken();
+   console.log("DB data", user.forgotPasswordToken);
+   console.log("Reset Token:", resetToken);
+
+   await user.save();
+
+   const resetPasswordURL = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+   console.log(resetPasswordURL);
+
+   const subject = "reset password";
+   const message = `You can reset your password by clicking <a href=${resetPasswordURL} target=_blank> reset your password </a>\n If the above link does not work, please copy paste this link in new tab ${resetPasswordURL} \n and If you not requested this kindly ignore this.`;
+
+   try {
+      await sendEmail(email, subject, message);
+
+      return res.status(200).json({
+         success: true,
+         message: `Reset Password token has been send to ${email} successfully`,
+      });
+   } catch (error) {
+      console.log(error);
+      user.forgotPasswordExpiry = undefined; //
+      user.forgotPasswordToken = undefined; //
+      return next(new AppError(error.message, 500));
+   }
+};
+
+const resetPassword = async (req, res, next) => {
+   const { token } = req.params;
+
+   const { password } = req.body;
+
+   const forgotPasswordToken = crypto
+      .createHash("sha256")
+      .update(token)
+      .digest("hex");
+
+   const user = await User.findOne({
+      forgotPasswordToken,
+      forgotPasswordExpiry: { $gt: Date.now() },
+   });
+
+   if (!user) {
+      return next(new AppError("Token is invalid, please try again", 400));
+   }
+
+   user.password = password;
+   user.forgotPasswordToken = undefined; //
+   user.forgotPasswordExpiry = undefined; //
+
+   user.save();
+
+   res.status(200).json({
+      success: true,
+      message: "Your password changed successfully",
+   });
+};
+
+export {
+   register,
+   logIn,
+   logOut,
+   getProfileDetails,
+   forgotPassword,
+   resetPassword,
+};
