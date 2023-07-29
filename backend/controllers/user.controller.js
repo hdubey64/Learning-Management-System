@@ -217,11 +217,11 @@ const resetPassword = async (req, res, next) => {
    });
 };
 
-const changePassword = async (req, res) => {
-   const { oldpassword, newPassword } = req.body;
-   const { id } = rew.user;
+const changePassword = async (req, res, next) => {
+   const { oldPassword, newPassword } = req.body;
+   const { id } = req.user;
 
-   if (!oldpassword || !newPassword) {
+   if (!oldPassword || !newPassword) {
       return next(new AppError("ALl field are mandatary", 400));
    }
 
@@ -231,19 +231,74 @@ const changePassword = async (req, res) => {
       return next(new AppError("User does not exists", 400));
    }
 
-   const isPasswordValid = await User.comparePassword(oldpassword);
+   const isPasswordValid = await user.comparePassword(oldPassword);
 
    if (!isPasswordValid) {
       return next(new AppError("Invalid old password", 400));
    }
    user.password = newPassword;
 
-   await User.save();
+   await user.save();
    user.password = undefined;
-   res.status(200).json({
+
+   return res.status(200).json({
       success: true,
       message: "Password changed successfully",
    });
+};
+
+const updateUser = async (req, res, next) => {
+   try {
+      const { fullName } = req.body;
+
+      const { id } = req.user;
+      const user = await User.findOne({ _id: id });
+
+      console.log(user);
+
+      if (!user) {
+         return next(new AppError("User does nor exists", 400));
+      }
+
+      if (fullName) {
+         user.fullName = fullName;
+      }
+      if (req.file) {
+         await cloudinary.v2.uploader.destroy(user.avatar.public_id);
+         try {
+            const result = await cloudinary.v2.uploader.upload(req.file.path, {
+               folder: "LMS",
+               width: 250,
+               height: 250,
+               gravity: "faces",
+               crop: "fill",
+            });
+
+            if (result) {
+               user.avatar.public_id = result.public_id;
+               user.avatar.secure_url = result.secure_url;
+
+               //Reomve file from server
+               fs.rm(`uploads/${req.file.filename}`, () => {});
+            }
+         } catch (error) {
+            console.error(error);
+            return next(
+               new AppError(error || "File not uploaded please try again", 500)
+            );
+         }
+      }
+
+      await user.save();
+
+      return res.status(200).json({
+         success: true,
+         message: "User details  updated successfully",
+      });
+   } catch (error) {
+      console.log(error);
+      return next(new AppError("Failed to update", 400));
+   }
 };
 
 export {
@@ -254,4 +309,5 @@ export {
    forgotPassword,
    resetPassword,
    changePassword,
+   updateUser,
 };
