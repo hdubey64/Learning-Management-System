@@ -24,7 +24,7 @@ const courseSchema = new Schema(
             type: "string",
             required: true,
          },
-         SecureUrl: {
+         secure_url: {
             type: "string",
             required: true,
          },
@@ -50,7 +50,7 @@ const courseSchema = new Schema(
          type: Number,
          default: 0,
       },
-      createBy: {
+      createdBy: {
          type: "string",
          required: true,
       },
