@@ -3,6 +3,7 @@ import app from "./app.js";
 import connectionToDB from "./config/dbConnection.js";
 import { v2 as cloudinary } from "cloudinary";
 import http from "http";
+import Razorpay from "razorpay";
 const PORT = process.env.PORT || 5000;
 
 cloudinary.config({
@@ -15,6 +16,11 @@ cloudinary.config({
 //    await connectionToDB();
 //    console.log(`App is running on http:localhost:${PORT}`);
 // });
+
+export const razorpay = new Razorpay({
+   key_id: process.env.RAZORPAY_KEY_ID,
+   key_secret: process.env.RAZORPAY_SECRET_KEY,
+});
 
 const server = http.createServer(app);
 
