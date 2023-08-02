@@ -5,6 +5,7 @@ import cors from "cors";
 import userRouter from "./routes/user.routes.js";
 import errorMiddleware from "./middlewares/error.middleware.js";
 import courseRouter from "./routes/course.routes.js";
+import paymentRouter from "./routes/payment.routes.js";
 
 const app = express();
 
@@ -30,6 +31,7 @@ app.use("/ping", function (req, res) {
 
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/courses", courseRouter);
+app.use("/api/v1/payment", paymentRouter);
 
 app.all("*", (req, res) => {
    res.status(404).json("OOPS!! 404 page not found");
