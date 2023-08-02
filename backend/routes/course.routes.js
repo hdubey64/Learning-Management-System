@@ -11,6 +11,7 @@ import {
 import {
    isLoggedIn,
    authorizedRoles,
+   authorizedSubscriber,
 } from "../middlewares/auth.middleware.config.js";
 import upload from "../middlewares/multer.middleware.js";
 
@@ -28,7 +29,7 @@ courseRouter
 
 courseRouter
    .route("/:id")
-   .get(isLoggedIn, authorizedRoles("ADMIN"), getLecturesByCousreId)
+   .get(isLoggedIn, authorizedSubscriber, getLecturesByCousreId)
    .put(isLoggedIn, authorizedRoles("ADMIN"), updateCourse)
    .delete(isLoggedIn, authorizedRoles("ADMIN"), removeCourse)
    .post(
