@@ -65,12 +65,14 @@ export const verifySubscription = async (req, res, next) => {
       const {
          razorpay_payment_id,
          razorpay_signature,
-         razorpay_amount,
          razorpay_subscription_id,
       } = req.body;
 
       const user = await User.findOne({ _id: id });
-
+      if (!user) {
+         return next(new AppError("Unauthorized user, Please Login", 400));
+      }
+      console.log(user);
       if (user.role === "ADMIN") {
          return next(new AppError("You are not allowed to subscribe", 400));
       }
@@ -81,22 +83,18 @@ export const verifySubscription = async (req, res, next) => {
          .update(`${razorpay_payment_id} | ${subscriptionId}`)
          .digest("hex");
 
-      console.log(" razorpay_signature_one", razorpay_signature);
       if (generatedSignature !== razorpay_signature) {
-         console.log("generatedSignature", generatedSignature);
          return next(
             new AppError("Payment not varified, please try again", 500)
          );
       }
 
-      console.log(" razorpay_signature_two", razorpay_signature);
       await Payment.create({
          razorpay_payment_id,
          razorpay_signature,
          razorpay_subscription_id,
       });
 
-      console.log(" razorpay_signature_two", razorpay_signature);
       user.subscription.status = "active";
       await user.save();
 
@@ -110,6 +108,46 @@ export const verifySubscription = async (req, res, next) => {
    }
 };
 
-export const cancleSubscription = async (req, res, next) => {};
+export const cancleSubscription = async (req, res, next) => {
+   try {
+      const { id } = req.user;
+      const user = await User.findOne({ _id: id });
 
-export const allPayment = async (req, res, next) => {};
+      if (!user) {
+         return next(new AppError("Unauthorized user, Please Login", 500));
+      }
+
+      if (user.role === "ADMIN") {
+         return next(
+            new AppError("Admin cannot purchase or cancle subscription", 500)
+         );
+      }
+
+      const subscriptionId = user.subscription.id;
+      const subscription = await razorpay.subscriptions.cancel(subscriptionId);
+
+      user.subscription.status = subscription.status;
+
+      await User.save();
+   } catch (error) {
+      return next(new AppError(error.message, 500));
+   }
+};
+
+export const allPayment = async (req, res, next) => {
+   try {
+      const { count } = req.query;
+
+      const subscriptions = await razorpay.subscriptions.all({
+         count: count || 10,
+      });
+
+      res.status(200).json({
+         success: true,
+         message: "All payments",
+         subscriptions,
+      });
+   } catch (error) {
+      return next(new AppError(e.message, 500));
+   }
+};
