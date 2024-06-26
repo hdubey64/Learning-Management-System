@@ -1,4 +1,4 @@
-# LMS Frontend
+<!-- # LMS Frontend
 
 This is the frontend project for the Learning Management System (LMS). It is built with React, TypeScript, and Vite, using the NextUI component library.
 
@@ -66,4 +66,4 @@ src/components/: This folder contains reusable React components.
 src/pages/: This folder contains page components.
 src/styles/: This folder contains global styles and CSS files.
 src/App.tsx: The main App component.
-src/index.tsx: The entry point of the application.
+src/index.tsx: The entry point of the application. -->
