@@ -1,7 +1,14 @@
 import "./App.css";
+import { Route, Routes } from "react-router-dom";
 
 function App() {
-   return <>LMS Project</>;
+   return (
+      <>
+         <Routes>
+            <Route path="/" element={<Home />}></Route>
+         </Routes>
+      </>
+   );
 }
 
 export default App;
