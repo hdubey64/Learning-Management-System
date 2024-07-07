@@ -1,17 +1,19 @@
 import { FiMenu } from "react-icons/fi";
 import { AiFillCloseCircle } from "react-icons/ai";
 import { Link } from "react-router-dom";
+import Footer from "../Components/Footer";
 
 const HomeLayout = ({ children }) => {
-   const changeWidth = () => {
-      const drawerSide = document.getElementByClassName("drawer-side");
-      drawerSide[0].style.width = 0;
-   };
-   const hideDrawer = () => {
-      const element = docimnet.getElementByClassName("drawer-toggle");
+   function changeWidth() {
+      const drawerSide = document.getElementsByClassName("drawer-side");
+      drawerSide[0].style.width = "auto";
+   }
+   function hideDrawer() {
+      const element = document.getElementsByClassName("drawer-toggle");
       element[0].checked = false;
-      changeWidth();
-   };
+      const drawerSide = document.getElementsByClassName("drawer-side");
+      drawerSide[0].style.width = 0;
+   }
 
    return (
       <div className="min-h-[90vh]">
@@ -27,7 +29,7 @@ const HomeLayout = ({ children }) => {
                   />
                </label>
             </div>
-            <div className="drawer-size w-0">
+            <div className="drawer-side w-0">
                <label htmlFor="my-drawer" className="drawer-overlay">
                   <ul className="menu p-4 w-48 md:w-80 bg-base-100 text-base-cotent relative">
                      <li className="w-fit absolute right-2 z-50">
@@ -53,6 +55,7 @@ const HomeLayout = ({ children }) => {
          </div>
 
          {children}
+         <Footer />
       </div>
    );
 };
