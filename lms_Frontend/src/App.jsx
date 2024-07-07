@@ -1,6 +1,7 @@
 import "./App.css";
 import { Route, Routes } from "react-router-dom";
 import Footer from "./Components/Footer";
+import HomeLayout from "./Layouts/HomeLayout";
 
 function App() {
    return (
@@ -9,7 +10,7 @@ function App() {
          <Routes>
             <Route path="/" element={<Home />}></Route>{" "}
          </Routes> */}
-         <Footer />
+         <HomeLayout />
       </>
    );
 }
